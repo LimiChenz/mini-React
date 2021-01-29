@@ -1,5 +1,4 @@
 import { Zero } from './zero-case.js'
-
 export default function Test(props) {
     let data = 'message'
 
