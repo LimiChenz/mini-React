@@ -129,22 +129,26 @@ export const Zero = {
     useState(initVal){
         let that = this;
         let currentIndex = that._stateIndex;
-       
-        that._State[currentIndex] = that._State[currentIndex] || initVal;
+
+        that._State[currentIndex] = that._State[currentIndex] === undefined ? initVal : that._State[currentIndex];
         that._stateIndex++;
+        // console.log('INIT...',that._State[currentIndex], currentIndex);
 
         const setState = newState => {
             that._stateIndex = 0;
             that.init.status = 'update';
             that._State[currentIndex] = newState;
+            // console.log('UPDATE...',that._State[currentIndex], currentIndex);
             let vNode = that.init.initfn();
             that.updateDom(vNode);
         }
 
-        // console.log(that._State[currentIndex], currentIndex);
         return [that._State[currentIndex], setState];
     },
     render: function(vNode) {
+        if (!vNode) {
+            return document.createTextNode('')
+        }
         let el = document.createElement(vNode.type)
         let { props } = vNode;
         let specialKeyMap = {
@@ -190,11 +194,15 @@ export const Zero = {
         return el;
     },
     updateDom(app){
-        
+        // console.log(app);
+
         this.init.root.innerHTML  = '';   
         let target = this.init.root;
         let result = this.render(app);
         target.appendChild(result);
+    },
+    diff(){
+
     },
     renderDom: function(el, target){
         this.init.initfn = el;
