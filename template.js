@@ -1,26 +1,21 @@
 import { Zero } from './zero-case.js'
 import Test from './compontens.js'
 export default function App(props) {
-
-    const data = Zero.reactive({
-        message: 'message'
-    })
-
-    console.log(data.message);
-
-    function hello(e){
-        // console.log('eventment...', e);
-        data.message = Math.random() * 10;
-        console.log(data.message);
+    const [message, changeMsg] = Zero.useState('message')
+    const [count, changeCount] = Zero.useState(1)
+    function hello(e) {
+        let result = Math.random() * 10;
+        changeCount( 23 )
+        changeMsg(result);
     }
 
-    // Zero.effect(hello)
-
     const EVENTELEMENT = (
-        <div>
-            <button onClick={e => {hello(e)}}>{ data.message }</button>
+        <div style={{marginTop: '20px'}}>
+            <button onClick={e => {hello(e)}}>{message}</button>
+            <div>{count}</div>
         </div>
     )
+
     return (
         <div id="App">
             { EVENTELEMENT }

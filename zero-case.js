@@ -1,48 +1,63 @@
 import { isObject } from './core/index.js'
 export const Zero = {
     effectStack: [],
+    _evnetStack:[],
+    _State: [],
+    _stateIndex: 0,
+    init: {
+        'status': 'init',
+        'initfn': null,
+        'root': null,
+        'updatefn': null
+    },
     targetMap: new WeakMap(),
+    ReactElement(type, key, ref, props){
+        const element = {
+            $$typeof: Symbol('key'),
+            type: type,
+            key: key,
+            ref: ref,
+            props: props
+        };
+
+        return element
+    },
     createElement: function(type, attrs, ...children){
-        let el = document.createElement(type)
+        const props = {
+            children: []
+        };
+        let key, ref = null;
+
+        if (attrs) {
+            ref = attrs.ref || null;
+            key = attrs.key || null; 
+        }
 
         for (const key in attrs) {
-            if (attrs.hasOwnProperty.call(attrs, key)) {
-                switch (key) {
-                    case 'value':
-                        if (el.tagName.toUpperCase() === 'INPUT' ||
-                            el.tagName.toUpperCase() === 'TEXTAREA') {
-                            el[key] = attrs[key];
-                        } else {
-                            el.setAttribute(key, attrs[key]);
-                        }
-                        break;
-                    case 'style':
-                        el.style.cssText = attrs[key];
-                        break;
-                    default:
-                        el.setAttribute(key, attrs[key]);
-                        break;
+            if (Object.hasOwnProperty.call(attrs, key)) {
+                if (typeof attrs[key] === 'function') {
+                    let fn = attrs[key]
+                    // console.log(fn);
                 }
-
-                if (/on\w+/.test(key)) {
-                    let event = key.toLowerCase();
-                    el[event] = attrs[key]
-                }
-
+                props[key] = attrs[key] || null
             }
         }
 
         for (const child of children) {
-            if (typeof child === 'string') {
-                child = document.createTextNode(child); 
-            }
             if (typeof child === 'function') {
                 child = child()
             }
-            el.appendChild(child);
+
+            props.children.push(child)
         }
-    
-        return el;
+
+        return this.ReactElement(
+            type,
+            key,
+            ref,
+            props
+        )
+
     },
     reactive(params){
         let that = this
@@ -59,7 +74,7 @@ export const Zero = {
             },
             set(target, key, value, receiver){
                 const result = Reflect.set(target, key, value, receiver);
-                console.log('Setter...', key);
+                console.log('Setter...', key, value);
                 that.trigger(target, key)
                 return result
             },
@@ -77,7 +92,7 @@ export const Zero = {
             try {
                 that.effectStack.push(rxEffect)
                 return cb()
-            } catch (error) {
+            } finally {
                 that.effectStack.pop()
             }
         }
@@ -85,7 +100,8 @@ export const Zero = {
         return rxEffect
     },
     track(target, key){
-        const effecFn = this.effectStack[this.effectStack.length -1]
+        const effecFn = this.effectStack[this.effectStack.length-1]
+
         if (effecFn) {
             let depsMap = this.targetMap.get(target)
             if (!depsMap) {
@@ -108,13 +124,97 @@ export const Zero = {
                 deps.forEach(effecFn => effecFn());
             }
         }
+        // this.render()
+    },
+    useState(initVal){
+        let that = this;
+        let currentIndex = that._stateIndex;
+       
+        that._State[currentIndex] = that._State[currentIndex] || initVal;
+        that._stateIndex++;
+
+        const setState = newState => {
+            that.init.status = 'update';
+            that._State[currentIndex] = newState;
+            let vNode = that.init.initfn();
+            that.updateDom(vNode);
+            that._stateIndex = 0;
+        }
+
+        // console.log(that._State[currentIndex], setState);
+        return [that._State[currentIndex], setState];
     },
     render: function(vNode) {
-        let dd = vNode();
-        return dd
+        let el = document.createElement(vNode.type)
+        let { props } = vNode;
+        let specialKeyMap = {
+            className: 'class',
+            fontSize: 'font-size',
+            marginTop: 'margin-top',
+            onClick: 'click',
+            onChange: 'change'
+        }
+
+        props && Object.keys(props).forEach( key => {
+            if (key === 'children') {
+                props.children.forEach( child => {
+                    if (typeof child === 'string' ||
+                        typeof child === 'number') {
+                        child = document.createTextNode(child); 
+                        el.appendChild(child);
+                    } else {
+                        el.appendChild(this.render(child));
+                    }
+                })
+            }else if (key === 'style') {
+                let styleObj = props.style;
+                let styleItems = [];
+                Object.keys(styleObj).forEach( styleKey => {
+                    styleItems.push(`${specialKeyMap[styleKey] || styleKey}: ${styleObj[styleKey]}`)
+                })
+                el.setAttribute('style', styleItems.join(';'))
+            } else {
+                if (typeof props[key] === 'function') {
+                    // 添加事件
+                    el.addEventListener(specialKeyMap[key], props[key], false);
+                    let event = new Set();
+                    event.add(specialKeyMap[key], props[key]);
+                    this._evnetStack.push(event);
+
+                }else {
+                    el.setAttribute(specialKeyMap[key] || key, props[key]);
+                }
+            }
+        })
+
+        return el;
+    },
+    updateDom(app){
+        
+        this.init.root.innerHTML  = '';   
+        let target = this.init.root;
+        let result = this.render(app);
+        target.appendChild(result);
     },
     renderDom: function(el, target){
+        this.init.initfn = el;
+        this.init.root = target;
+
         let app = el();
-        target.appendChild(app);
+        let result = this.render(app);
+        target.appendChild(result);
     }
 } 
+
+function getAttrs(obj, value){
+    let o = {}
+    for (const key in obj) {
+        if (Object.hasOwnProperty.call(obj, key)) {
+            const element = obj[key];
+            if (key !== value) {
+                o[key] = element;
+            }
+        }
+    }
+    return o
+}
