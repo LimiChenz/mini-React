@@ -147,9 +147,9 @@ export const Zero = {
     },
     render: function(vNode) {
         if (!vNode) {
-            return document.createTextNode('')
+            return document.createTextNode('');
         }
-        let el = document.createElement(vNode.type)
+        let el = document.createElement(vNode.type);
         let { props } = vNode;
         let specialKeyMap = {
             className: 'class',
@@ -157,7 +157,7 @@ export const Zero = {
             marginTop: 'margin-top',
             onClick: 'click',
             onChange: 'change'
-        }
+        };
 
         props && Object.keys(props).forEach( key => {
             if (key === 'children') {
@@ -176,7 +176,7 @@ export const Zero = {
                 Object.keys(styleObj).forEach( styleKey => {
                     styleItems.push(`${specialKeyMap[styleKey] || styleKey}: ${styleObj[styleKey]}`)
                 })
-                el.setAttribute('style', styleItems.join(';'))
+                el.setAttribute('style', styleItems.join(';'));
             } else {
                 if (typeof props[key] === 'function') {
                     // 添加事件
@@ -195,7 +195,6 @@ export const Zero = {
     },
     updateDom(app){
         // console.log(app);
-
         this.init.root.innerHTML  = '';   
         let target = this.init.root;
         let result = this.render(app);

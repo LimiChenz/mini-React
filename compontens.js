@@ -1,10 +1,9 @@
 import { Zero } from './zero-case.js'
 export default function Test(props) {
-    let data = 'message'
-
+    const [data, changeData] = Zero.useState('message')
 
     function change(e) {
-        data = e.target.value;
+        changeData(e.target.value);
         console.log(e.target.value);
     }
 
