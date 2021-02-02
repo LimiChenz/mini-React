@@ -134,14 +134,14 @@ export const Zero = {
         that._stateIndex++;
 
         const setState = newState => {
+            that._stateIndex = 0;
             that.init.status = 'update';
             that._State[currentIndex] = newState;
             let vNode = that.init.initfn();
             that.updateDom(vNode);
-            that._stateIndex = 0;
         }
 
-        // console.log(that._State[currentIndex], setState);
+        // console.log(that._State[currentIndex], currentIndex);
         return [that._State[currentIndex], setState];
     },
     render: function(vNode) {

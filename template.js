@@ -5,7 +5,6 @@ export default function App(props) {
     const [count, changeCount] = Zero.useState(1)
     function hello(e) {
         let result = Math.random() * 10;
-        changeCount( 23 )
         changeMsg(result);
     }
 
